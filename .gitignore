@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript
+typings/
+*.tsbuildinfo
+
+# Optional eslint cache
+.eslintcache
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# IDEs
+.idea
+*.iml
+
+# Grafana
+.docker-compose/grafana/var/lib/grafana/sessions
+
+# Local files
+dist/
+coverage

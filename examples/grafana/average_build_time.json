@@ -1,0 +1,89 @@
+{
+  "aliasColors": {},
+  "bars": false,
+  "dashLength": 10,
+  "dashes": false,
+  "datasource": "Prometheus",
+  "fill": 1,
+  "gridPos": {
+    "h": 9,
+    "w": 12,
+    "x": 0,
+    "y": 0
+  },
+  "id": 5,
+  "legend": {
+    "avg": true,
+    "current": true,
+    "max": true,
+    "min": true,
+    "show": true,
+    "total": false,
+    "values": true,
+    "alignAsTable": true,
+    "hideEmpty": false,
+    "hideZero": false
+  },
+  "lines": true,
+  "linewidth": 1,
+  "links": [],
+  "nullPointMode": "null as zero",
+  "percentage": false,
+  "pointradius": 5,
+  "points": false,
+  "renderer": "flot",
+  "seriesOverrides": [],
+  "spaceLength": 10,
+  "stack": false,
+  "steppedLine": false,
+  "targets": [
+    {
+      "refId": "E",
+      "expr": "avg(sum(max(circleci_build_time_sum) by (repo,workflow,upstream_jobs)) by (repo,workflow)) by (repo)",
+      "intervalFactor": 1,
+      "format": "time_series",
+      "legendFormat": "{{repo}}",
+      "hide": false
+    }
+  ],
+  "thresholds": [],
+  "timeFrom": null,
+  "timeRegions": [],
+  "timeShift": null,
+  "title": "Average build time",
+  "tooltip": {
+    "shared": true,
+    "sort": 0,
+    "value_type": "individual"
+  },
+  "type": "graph",
+  "xaxis": {
+    "buckets": null,
+    "mode": "time",
+    "name": null,
+    "show": true,
+    "values": []
+  },
+  "yaxes": [
+    {
+      "format": "s",
+      "label": "",
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    },
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    }
+  ],
+  "yaxis": {
+    "align": false,
+    "alignLevel": null
+  }
+}

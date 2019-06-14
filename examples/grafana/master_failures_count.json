@@ -1,0 +1,91 @@
+{
+  "aliasColors": {},
+  "bars": false,
+  "dashLength": 10,
+  "dashes": false,
+  "datasource": "Prometheus",
+  "fill": 1,
+  "gridPos": {
+    "h": 9,
+    "w": 12,
+    "x": 12,
+    "y": 9
+  },
+  "id": 6,
+  "legend": {
+    "alignAsTable": false,
+    "avg": false,
+    "current": false,
+    "hideEmpty": false,
+    "hideZero": false,
+    "max": false,
+    "min": false,
+    "rightSide": false,
+    "show": true,
+    "total": false,
+    "values": false
+  },
+  "lines": true,
+  "linewidth": 1,
+  "links": [],
+  "nullPointMode": "null",
+  "percentage": false,
+  "pointradius": 5,
+  "points": false,
+  "renderer": "flot",
+  "seriesOverrides": [],
+  "spaceLength": 10,
+  "stack": false,
+  "steppedLine": false,
+  "targets": [
+    {
+      "expr": "count(sum(circleci_build_time_count{branch=~\"master|develop\",success=\"false\"}) by (repo, workflow)) by (repo)",
+      "format": "time_series",
+      "instant": false,
+      "interval": "",
+      "intervalFactor": 1,
+      "legendFormat": "{{repo}}",
+      "refId": "A"
+    }
+  ],
+  "thresholds": [],
+  "timeFrom": null,
+  "timeRegions": [],
+  "timeShift": null,
+  "title": "Master or develop failures count",
+  "tooltip": {
+    "shared": true,
+    "sort": 0,
+    "value_type": "individual"
+  },
+  "type": "graph",
+  "xaxis": {
+    "buckets": null,
+    "mode": "time",
+    "name": null,
+    "show": true,
+    "values": []
+  },
+  "yaxes": [
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    },
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    }
+  ],
+  "yaxis": {
+    "align": false,
+    "alignLevel": null
+  }
+}

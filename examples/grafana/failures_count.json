@@ -1,0 +1,99 @@
+{
+  "aliasColors": {},
+  "bars": false,
+  "dashLength": 10,
+  "dashes": false,
+  "datasource": "Prometheus",
+  "fill": 1,
+  "gridPos": {
+    "h": 9,
+    "w": 12,
+    "x": 12,
+    "y": 0
+  },
+  "id": 3,
+  "legend": {
+    "alignAsTable": false,
+    "avg": false,
+    "current": true,
+    "hideEmpty": false,
+    "hideZero": false,
+    "max": false,
+    "min": false,
+    "rightSide": false,
+    "show": true,
+    "total": false,
+    "values": true
+  },
+  "lines": true,
+  "linewidth": 1,
+  "links": [],
+  "nullPointMode": "connected",
+  "percentage": false,
+  "pointradius": 5,
+  "points": false,
+  "renderer": "flot",
+  "seriesOverrides": [],
+  "spaceLength": 10,
+  "stack": false,
+  "steppedLine": false,
+  "targets": [
+    {
+      "expr": "count(sum(circleci_build_time_count{success=\"false\"}) by (repo, workflow)) by (repo)",
+      "format": "time_series",
+      "instant": false,
+      "interval": "",
+      "intervalFactor": 1,
+      "legendFormat": "{{repo}}",
+      "refId": "A",
+      "hide": false
+    },
+    {
+      "refId": "B",
+      "expr": "circleci_build_time_count{success=\"false\"}",
+      "intervalFactor": 1,
+      "format": "time_series",
+      "hide": true
+    }
+  ],
+  "thresholds": [],
+  "timeFrom": null,
+  "timeRegions": [],
+  "timeShift": null,
+  "title": "Failures count",
+  "tooltip": {
+    "shared": true,
+    "sort": 0,
+    "value_type": "individual"
+  },
+  "type": "graph",
+  "xaxis": {
+    "buckets": null,
+    "mode": "time",
+    "name": null,
+    "show": true,
+    "values": []
+  },
+  "yaxes": [
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    },
+    {
+      "format": "short",
+      "label": null,
+      "logBase": 1,
+      "max": null,
+      "min": null,
+      "show": true
+    }
+  ],
+  "yaxis": {
+    "align": false,
+    "alignLevel": null
+  }
+}

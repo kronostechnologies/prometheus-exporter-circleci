@@ -1,0 +1,5 @@
+* text=auto filter=tabspace
+*.bat text eol=crlf
+*.sh text eol=lf
+*.template text eol=lf
+*.md whitespace=-trailing-space

@@ -1,0 +1,38 @@
+version: '3.6'
+services:
+  exporter-circleci:
+    build: ./
+    environment:
+      - NODE_ENV
+      - HTTP_PORT
+      - LOG_FORMAT
+      - LOG_LEVEL
+      - CIRCLECI_TOKEN
+      - CIRCLECI_ORGANIZATION
+      - SCRAPE_BUILDS_PER_PAGE
+      - SCRAPE_MAX_PAGES
+      - SCRAPE_SINCE
+    ports:
+      - "9600:9600"
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./.docker-compose/prometheus/etc/prometheus:/etc/prometheus
+    depends_on:
+      - exporter-circleci
+
+  grafana:
+    image: grafana/grafana:5.4.3
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./.docker-compose/prometheus/etc/prometheus:/etc/prometheus
+      - ./.docker-compose/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+
+volumes:
+  grafana-storage:
