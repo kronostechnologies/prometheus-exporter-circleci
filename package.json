@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc --noEmit false",
     "lint": "tslint -p tsconfig.json",
-    "lint:ci": "yarn lint --format junit -o build/tests/tslint/junit.xml",
+    "lint:ci": "yarn lint --format junit -o build/tests/lint/junit.xml",
     "start": "ts-node-dev --transpile-only -r tsconfig-paths/register src/app.ts",
     "test": "jest --config=test/jest.config.js",
     "test:ci": "cross-env JEST_JUNIT_OUTPUT='build/tests/jest/junit.xml' yarn test --runInBand --ci --reporters=default --reporters=jest-junit",

@@ -30,5 +30,6 @@ typings/
 .docker-compose/grafana/var/lib/grafana/sessions
 
 # Local files
+build/
 dist/
 coverage

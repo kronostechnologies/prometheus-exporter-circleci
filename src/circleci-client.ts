@@ -62,7 +62,7 @@ export class CircleCiClient {
         this.api.recentBuilds(requestOptions)
             .then((builds: BuildSummary[]) => {
                 try {
-                    this.handleBuilds(builds, pagingOptions, status, requestOptions, subscriber);
+                    this.handleJobs(builds, pagingOptions, status, requestOptions, subscriber);
                 } catch (err) {
                     subscriber.error(err);
                 }
@@ -77,7 +77,7 @@ export class CircleCiClient {
             });
     }
 
-    private handleBuilds(
+    private handleJobs(
         builds: BuildSummary[],
         pagingOptions: PagingOptions,
         status: CurrentScrapeStatus,
@@ -86,7 +86,7 @@ export class CircleCiClient {
     ): void {
         const buildsToProcess = filterBuilds(this.organization, builds, status, pagingOptions.since);
         buildsToProcess.forEach(build => subscriber.next(build));
-        logger.debug(`Processed ${buildsToProcess.length}`);
+        logger.info(`Processed ${buildsToProcess.length} jobs`);
 
         const maxPages: number = pagingOptions.maxPages || Number.MAX_SAFE_INTEGER;
         if (this.hasReachedLastRequestedBuild(status, requestOptions, maxPages)) {
