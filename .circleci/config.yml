@@ -1,0 +1,167 @@
+version: 2.1
+
+variables:
+  working_directory: &working_directory '~/prometheus-exporter-circleci'
+
+executors:
+  node:
+    working_directory: *working_directory
+    docker:
+      - image: 'circleci/node:10.16.0'
+  docker:
+    working_directory: *working_directory
+    docker:
+      - image: 'circleci/python'
+
+orbs:
+  docker: circleci/docker@0.5.1
+
+commands:
+  attach_at_working_directory:
+    steps:
+      - attach_workspace:
+          at: *working_directory
+
+  # NodeJS / Yarn
+  restore_node_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - &node_cache 'v1-node-{{ arch }}-{{ checksum "yarn.lock" }}'
+            - 'v1-node-{{ arch }}-'
+  save_node_cache:
+    steps:
+      - save_cache:
+          key: *node_cache
+          paths: 'node_modules'
+  restore_yarn_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - &yarn_cache 'v1-yarn-{{ arch }}'
+  save_yarn_cache:
+    steps:
+      - save_cache:
+          key: *yarn_cache
+          paths:
+            - '~/.cache/yarn'
+
+  yarn_cached_install:
+    steps:
+      - restore_node_cache
+      - restore_yarn_cache
+      - run:
+          name: 'Install Node Dependencies'
+          command: 'yarn --frozen-lockfile'
+      - save_node_cache
+      - save_yarn_cache
+
+jobs:
+  prepare_workspace:
+    executor: 'node'
+    steps:
+      - checkout
+      - run:
+          name: 'Save initial build number'
+          command: 'echo ${CIRCLE_BUILD_NUM} > .build-number'
+      - persist_to_workspace:
+          root: '.'
+          paths: '.'
+
+  yarn_install:
+    executor: 'node'
+    steps:
+      - attach_at_working_directory
+      - yarn_cached_install
+
+  lint:
+    executor: 'node'
+    steps:
+      - attach_at_working_directory
+      - restore_node_cache
+      - run: 'mkdir -p build/tests/lint/'
+      - run:
+          name: 'Lint TS files'
+          command: 'yarn lint:ci'
+      - store_test_results:
+          path: 'build/tests'
+
+  unit_tests:
+    executor: 'node'
+    steps:
+      - attach_at_working_directory
+      - restore_node_cache
+      - run:
+          name: 'Run Jest Test Suite'
+          command: 'yarn test:ci'
+      - store_test_results:
+          path: 'build/tests'
+
+  yarn_build:
+    executor: 'node'
+    steps:
+      - attach_at_working_directory
+      - yarn_cached_install
+      - run:
+          name: 'Build dist'
+          command: 'yarn build'
+      - store_artifacts:
+          path: 'dist/'
+          destination: '/dist'
+
+  docker_build_and_push:
+    executor: 'docker'
+    parameters:
+      docker_tag:
+        type: string
+        default: ""
+    steps:
+      - attach_at_working_directory
+      - setup_remote_docker
+      - when:
+          condition: <<parameters.docker_tag>>
+          steps:
+            - run: echo "export APP_VERSION=<<parameters.docker_tag>>" >> $BASH_ENV
+      - unless:
+          condition: <<parameters.docker_tag>>
+          steps:
+            - run: echo "export APP_VERSION=$(cut -d 'v' -f 2 \<<<$CIRCLE_TAG)" >> $BASH_ENV
+      - run: 'echo "App version: $APP_VERSION"'
+      - docker/check
+      - docker/build:
+          image: kronostechnologies/prometheus-exporter-circleci
+          tag: ${APP_VERSION}
+      - docker/push:
+          image: kronostechnologies/prometheus-exporter-circleci
+          tag: ${APP_VERSION}
+
+workflows:
+  version: 2
+
+  code_check:
+    jobs:
+      - prepare_workspace
+      - yarn_install:
+          requires:
+            - prepare_workspace
+
+      - lint:
+          requires:
+            - yarn_install
+      - unit_tests:
+          requires:
+            - yarn_install
+
+      - yarn_build:
+          requires:
+            - lint
+            - unit_tests
+
+      - docker_build_and_push:
+          context: orb/docker
+          docker_tag: latest
+          filters:
+            branches:
+              only: master
+          requires:
+            - yarn_build

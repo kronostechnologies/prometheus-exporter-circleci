@@ -14,7 +14,11 @@ At the moment, the builds time are collected in an Histogram, with these labels 
 - Workflow Upstream Jobs (upstream_jobs)
 
 ## Development
-### Build && Run
+### Run & Watch
+Start ts-node-dev on port 9600.
+`yarn start`
+
+### Build & Run with Docker
 ```
 docker build . -t prometheus-exporter-circleci
 docker run -e CIRCLECI_TOKEN=your-circleci-token -e CIRCLECI_ORGANIZATION=org -e LOG_LEVEL=silly -p 9600:9600 --rm -it prometheus-exporter-circleci
@@ -23,7 +27,7 @@ Server is accessible on http://localhost:9600/metrics
 
 For development, add sources
 ```
-docker run -e CIRCLECI_TOKEN=your-circleci-token -e CIRCLECI_ORGANIZATION=org -e LOG_LEVEL=silly -v $(pwd):/app -p 9600:9600 --rm -it prometheus-exporter-circleci yarn start
+docker run -e CIRCLECI_TOKEN=your-circleci-token -e CIRCLECI_ORGANIZATION=org -e LOG_LEVEL=silly -v $(pwd):/app -p 9600:9600 --rm --entrypoint yarn -it prometheus-exporter-circleci start
 ```
 
 ### Integration with Prometheus
@@ -31,7 +35,7 @@ A docker-compose file provide integration with prometheus server.
 ```
 export CIRCLECI_TOKEN=your-circleci-personal-token
 export CIRCLECI_ORGANIZATION=org
-yarn build && docker-compose up
+docker-compose up
 ```
 
 ### Lint
@@ -59,12 +63,12 @@ Organisation name.
 #### HTTP_PORT
 Port number the http server will listen to.
 Default `9600`.
-### SCRAPE_BUILDS_PER_PAGE
+#### SCRAPE_BUILDS_PER_PAGE
 Number of builds per page. Maximum `100`.
 Default `100`.
-### SCRAPE_MAX_PAGES
+#### SCRAPE_MAX_PAGES
 Maximum number of pages to scrape. This is mostly for testing purposes.
 Default Scrape all pages
-### SCRAPE_SINCE
+#### SCRAPE_SINCE
 The number of milliseconds to go back. Builds older than this number will be ignored.
 Default `86400000` (one day).
