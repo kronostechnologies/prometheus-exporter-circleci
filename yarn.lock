@@ -884,10 +884,10 @@ ci-info@^2.0.0:
   resolved "https://registry.yarnpkg.com/ci-info/-/ci-info-2.0.0.tgz#67a9e964be31a51e15e5010d58e6f12834002f46"
   integrity sha512-5tK7EtrZ0N+OLFMthtqOj4fI2Jeb88C4CAZPu25LDVUgXJ0A3Js4PMGqrn0JU1W0Mh1/Z8wZzYPxqUrXeBboCQ==
 
-circleci-api@^3.3.4:
-  version "3.3.4"
-  resolved "https://registry.yarnpkg.com/circleci-api/-/circleci-api-3.3.4.tgz#f6d74a7b01c7495af66a23da5f887f82d6dea969"
-  integrity sha512-Q6Cc3DmPl/I9AxDK+jx8O3kFn8TsQEi8rQBqcG21fQTLI8+3abwHYfGb48eU7Sw70lzADJjrDy+sr9zYDYz3Ng==
+circleci-api@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/circleci-api/-/circleci-api-4.0.0.tgz#d773fe68f4a59e1968881269883a23b0805b3546"
+  integrity sha512-D/THFyhOv6THSkYXJhrOLIOmV7fmyDqgs1+pBFMAqDR+ywXszxa2Dqx1Zw+YD3O2zD2y5LQOifCDT96VidRG7Q==
   dependencies:
     axios "^0.19.0"
 

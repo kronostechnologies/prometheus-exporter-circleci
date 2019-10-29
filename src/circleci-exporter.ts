@@ -27,10 +27,11 @@ export class CircleCiExporter {
         this.previousScrapeStatus = previousScrapeStatus;
     }
 
-    public async export(pagingOptions: PagingOptions): Promise<void> {
+    public async export(pagingOptions: PagingOptions): Promise<Object> {
         logger.info('Starting scraping.');
         return new Promise((resolve, reject) => {
             const buildSummaryObservable = this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus);
+            const artifactsSummaryObservable = this.client.getLatestArtifacts(pagingOptions, { retry: 0 });
 
             const scrapeStatus = new ScrapeStatus();
             scrapeStatus.lastScrapeTime = Date.now();
@@ -43,6 +44,16 @@ export class CircleCiExporter {
             }, () => {
                 this.previousScrapeStatus.mergeWith(scrapeStatus);
                 logger.info('Finished scraping.');
+                resolve();
+            });
+
+            artifactsSummaryObservable.subscribe(artifact => {
+                logger.info('latestArtifacts: NEXT');
+            }, err => {
+                logger.error('latestArtifacts: ERROR: ' + err);
+                reject(err);
+            }, () => {
+                logger.info('latestArtifacts: COMPLETE');
                 resolve();
             });
         });

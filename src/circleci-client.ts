@@ -1,4 +1,4 @@
-import { BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
+import { Artifact, ArtifactsRequestOptions, BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
 import { Observable, Subscriber } from 'rxjs';
 import { filterBuilds } from './builds-filter';
 import { CircleCiConfig } from './config';
@@ -8,6 +8,12 @@ import { PagingOptions } from './paging-options';
 import { ScrapeStatus } from './scrape-status';
 
 export type BuildInfo = BuildSummary & {
+    username: string;
+    reponame: string;
+    lifecycle: string;
+};
+
+export type ArtifactInfo = Artifact & {
     username: string;
     reponame: string;
     lifecycle: string;
@@ -28,7 +34,7 @@ export class CircleCiClient {
             token: config.token,
             vcs: {
                 owner: config.organization,
-                repo: 'overridden',
+                repo: 'kronos-fna',
             },
         });
     }
@@ -73,6 +79,40 @@ export class CircleCiClient {
                     status.retry++;
                     setTimeout(() => this.doGetRecentBuilds(subscriber, pagingOptions, status),
                         1000 * status.retry);
+                }
+            });
+    }
+
+    public getLatestArtifacts(pagingOptions: PagingOptions, previousScrapeArtifacts: Object): Observable<ArtifactInfo> {
+        return new Observable(subscriber => {
+            this.doGetLatestArtifacts(subscriber, pagingOptions, { retry: 0 });
+        });
+    }
+
+    private doGetLatestArtifacts(
+        subscriber: Subscriber<ArtifactInfo>,
+        pagingOptions: PagingOptions,
+        files: Object,
+    ): void {
+        const artifactRequestOptions: ArtifactsRequestOptions = {
+            branch: 'hrm/tests-coverage',
+            filter: 'successful',
+        };
+
+        this.api.latestArtifacts(artifactRequestOptions)
+            .then((artifacts: Artifact[]) => {
+                try {
+                    logger.info(`Processed ${artifacts.length} artifacts`);
+                } catch (err) {
+                    subscriber.error(err);
+                }
+            })
+            .catch(err => {
+                logger.error(`Error fetching latest artifacts : ${err}. Retrying.`);
+                if (files.retry < MAX_RETRIES) {
+                    files.retry++;
+                    setTimeout(() => this.doGetLatestArtifacts(subscriber, pagingOptions, files),
+                        1000 * files.retry);
                 }
             });
     }

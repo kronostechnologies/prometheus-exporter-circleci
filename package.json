@@ -41,7 +41,7 @@
     "typescript": "^3.5.1"
   },
   "dependencies": {
-    "circleci-api": "^3.3.4",
+    "circleci-api": "^4.0.0",
     "express": "^4.17.1",
     "prom-client": "^11.3.0",
     "rxjs": "^6.5.2",
