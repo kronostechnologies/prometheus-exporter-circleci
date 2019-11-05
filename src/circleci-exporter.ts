@@ -31,12 +31,25 @@ export class CircleCiExporter {
         logger.info('Starting scraping.');
         return new Promise((resolve, reject) => {
             const buildSummaryObservable = this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus);
-            const artifactsSummaryObservable = this.client.getLatestArtifacts(pagingOptions, { retry: 0 });
 
             const scrapeStatus = new ScrapeStatus();
             scrapeStatus.lastScrapeTime = Date.now();
             buildSummaryObservable.subscribe(build => {
                 scrapeStatus.updateFromBuild(build);
+
+                const artifactsSummaryObservable = this.client.getBuildArtifacts(build.build_num || 0);
+
+                artifactsSummaryObservable.subscribe(artifact => {
+                    logger.info(artifact);
+                    logger.info('buildArtifact: NEXT');
+                }, err => {
+                    logger.error('buildArtifact: ERROR: ' + err);
+                    reject(err);
+                }, () => {
+                    logger.info('buildArtifact: COMPLETE');
+                    resolve();
+                });
+
                 this.collectMetrics(build);
             }, err => {
                 logger.error(`Error scraping : ${err}`);
@@ -44,16 +57,6 @@ export class CircleCiExporter {
             }, () => {
                 this.previousScrapeStatus.mergeWith(scrapeStatus);
                 logger.info('Finished scraping.');
-                resolve();
-            });
-
-            artifactsSummaryObservable.subscribe(artifact => {
-                logger.info('latestArtifacts: NEXT');
-            }, err => {
-                logger.error('latestArtifacts: ERROR: ' + err);
-                reject(err);
-            }, () => {
-                logger.info('latestArtifacts: COMPLETE');
                 resolve();
             });
         });
