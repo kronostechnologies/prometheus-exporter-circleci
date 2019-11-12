@@ -1,4 +1,5 @@
 import { Artifact, BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
+import request from 'request';
 import { Observable, Subscriber } from 'rxjs';
 import { filterBuilds } from './builds-filter';
 import { CircleCiConfig } from './config';
@@ -25,10 +26,12 @@ const THROTTLING = 250;
 const MAX_RETRIES = 3;
 
 export class CircleCiClient {
+    private readonly apiToken: string;
     private readonly api: CircleCI;
     private readonly organization: string;
 
     constructor(config: CircleCiConfig) {
+        this.apiToken = config.token;
         this.organization = config.organization;
         this.api = new CircleCI({
             token: config.token,
@@ -100,7 +103,19 @@ export class CircleCiClient {
                 try {
                     if (artifacts.length > 0) {
                         logger.info(`Found ${artifacts.length} artifacts for build #${buildNumber}`);
-                        artifacts.forEach(artifact => logger.info(artifact));
+                        artifacts.forEach(artifact => {
+                            const options = {
+                                headers: {
+                                    'circle-token': this.apiToken,
+                                },
+                            };
+
+                            request(artifact.url, options, (err, response, body) => {
+                                if (response.statusCode === 200) {
+                                    logger.info(`Artifact ${response.request.path} has been retrieved`); // TODO: Use body to get artifact/xml content
+                                }
+                            });
+                        });
                     }
                 } catch (err) {
                     subscriber.error(err);
