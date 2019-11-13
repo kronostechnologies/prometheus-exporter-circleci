@@ -1,12 +1,9 @@
-FROM node:11-alpine as BASE
+FROM node:11 as BASE
 WORKDIR /app
 
 COPY . .
 
-RUN apk --no-cache add --virtual native-deps \
-  g++ gcc libgcc libstdc++ linux-headers make python && \
-  yarn --frozen-lockfile && \
-  apk del native-deps
+RUN yarn --frozen-lockfile
 RUN yarn build
 
 FROM node:11-alpine
