@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import XmlStream from 'xml-stream';
+import {Readable} from "stream";
 
 export interface CoverageInfo {
     classes: number; // clover: classes, jacoco: CLASS/missed+CLASS/covered
@@ -28,7 +29,7 @@ export class CloverCodeCoverageParser implements CodeCoverageParser {
     elements="4580" coveredelements="277" -> statement + conditional
     />
 */
-    parseStream(stream: fs.ReadStream): Promise<CoverageInfo> {
+    parseStream(stream: Readable): Promise<CoverageInfo> {
         let firstError: any;
         const coverageInfo: CoverageInfo = {
             classes: 0,

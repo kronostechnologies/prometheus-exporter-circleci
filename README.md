@@ -16,7 +16,7 @@ At the moment, the builds time are collected in an Histogram, with these labels 
 ## Development
 ### Run & Watch
 Start ts-node-dev on port 9600.
-`yarn start`
+`CIRCLECI_TOKEN=your-circleci-token CIRCLECI_ORGANIZATION=org yarn start`
 
 ### Build & Run with Docker
 ```

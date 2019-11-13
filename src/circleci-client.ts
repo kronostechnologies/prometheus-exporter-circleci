@@ -2,6 +2,7 @@ import { Artifact, BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
 import request from 'request';
 import { Observable, Subscriber } from 'rxjs';
 import { filterBuilds } from './builds-filter';
+import { CloverCodeCoverageParser, CoverageInfo } from './code-coverage';
 import { CircleCiConfig } from './config';
 import { CurrentScrapeStatus } from './current-scrape-status';
 import logger from './logger';
@@ -104,17 +105,7 @@ export class CircleCiClient {
                     if (artifacts.length > 0) {
                         logger.info(`Found ${artifacts.length} artifacts for build #${buildNumber}`);
                         artifacts.forEach(artifact => {
-                            const options = {
-                                headers: {
-                                    'circle-token': this.apiToken,
-                                },
-                            };
-
-                            request(artifact.url, options, (err, response, body) => {
-                                if (response.statusCode === 200) {
-                                    logger.info(`Artifact ${response.request.path} has been retrieved`); // TODO: Use body to get artifact/xml content
-                                }
-                            });
+                            this.handleArtifact(artifact);
                         });
                     }
                 } catch (err) {
@@ -128,6 +119,31 @@ export class CircleCiClient {
                 //     setTimeout(() => this.doGetBuildArtifacts(subscriber, buildNumber),
                 //         1000 * files.retry);
                 // }
+            });
+    }
+
+    private handleArtifact(artifact: Artifact): void {
+
+        // TODO: Find good coverage parser based on artifact info
+        const codeCoverageParser = new CloverCodeCoverageParser();
+
+        const options = {
+            headers: {
+                'circle-token': this.apiToken,
+            },
+        };
+
+        request.get(artifact.url, options)
+            .on('response', async (response: any) =>  {
+                if (response.statusCode === 200) {
+                    logger.info(`Artifact ${response.request.path} has been retrieved`);
+
+                    const coverageInfo: CoverageInfo = await codeCoverageParser
+                        .parseStream(response.request);
+
+                    // TODO: Add CoverageInfo to ArtifactInfo structure
+                    logger.info('Parsed coverage info', coverageInfo);
+                }
             });
     }
 

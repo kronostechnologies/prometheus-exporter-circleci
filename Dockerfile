@@ -3,7 +3,10 @@ WORKDIR /app
 
 COPY . .
 
-RUN yarn --frozen-lockfile
+RUN apk --no-cache add --virtual native-deps \
+  g++ gcc libgcc libstdc++ linux-headers make python && \
+  yarn --frozen-lockfile && \
+  apk del native-deps
 RUN yarn build
 
 FROM node:11-alpine
@@ -16,7 +19,10 @@ ENV LOG_LEVEL="info" \
 COPY package.json .
 COPY yarn.lock .
 
-RUN yarn --frozen-lockfile
+RUN apk --no-cache add --virtual native-deps \
+  g++ gcc libgcc libstdc++ linux-headers make python && \
+  yarn --frozen-lockfile && \
+  apk del native-deps
 
 # Bundle app source
 COPY --from=BASE /app/dist .
