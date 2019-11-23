@@ -43,7 +43,8 @@ export class CircleCiClient {
             token: config.token,
             vcs: {
                 owner: config.organization,
-                repo: 'kronos-fna',
+                // Be carefull, every repo-based request to the api must override the repo in option argument.
+                repo: 'override-me',
             },
         });
     }
@@ -94,17 +95,23 @@ export class CircleCiClient {
 
     public getBuildArtifacts(
         buildNumber: number,
+        repo: string,
     ): Observable<ArtifactInfo> {
         return new Observable(subscriber => {
-            this.doGetBuildArtifacts(subscriber, buildNumber);
+            this.doGetBuildArtifacts(subscriber, buildNumber, repo);
         });
     }
 
     private doGetBuildArtifacts(
         subscriber: Subscriber<ArtifactInfo>,
         buildNumber: number,
+        repo: string,
     ): void {
-        this.api.artifacts(buildNumber)
+        this.api.artifacts(buildNumber, {
+            vcs: {
+                repo: repo,
+            },
+        })
             .then((artifacts: Artifact[]) => {
                 from(artifacts)
                     .pipe(
@@ -114,7 +121,11 @@ export class CircleCiClient {
                     .subscribe(subscriber);
             })
             .catch(err => {
-                // TODO: if 404 complete else error ?
+                if (err && err.response && err.response.status === 404) {
+                    // No artifacts
+                    subscriber.complete();
+                    return;
+                }
                 logger.error(`Error fetching artifacts on build #${buildNumber} : ${err}. Retrying.`);
                 subscriber.complete();
             });

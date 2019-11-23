@@ -36,7 +36,7 @@ export class CircleCiExporter {
                 this.collectMetrics(build);
             }),
             map(build => {
-                return this.client.getBuildArtifacts(build.build_num || 0)
+                return this.client.getBuildArtifacts(build.build_num || 0, build.reponame)
                     .pipe(map(artifact => {
                         return { build, artifact };
                     }));
