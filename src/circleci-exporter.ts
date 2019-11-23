@@ -1,6 +1,7 @@
 import { Workflow } from 'circleci-api';
+import { map, mergeAll, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { BuildInfo, CircleCiClient } from './circleci-client';
+import { ArtifactInfo, BuildInfo, CircleCiClient } from './circleci-client';
 import logger from './logger';
 import * as Metrics from './metrics';
 import { PagingOptions } from './paging-options';
@@ -27,39 +28,34 @@ export class CircleCiExporter {
         this.previousScrapeStatus = previousScrapeStatus;
     }
 
-    public async export(pagingOptions: PagingOptions): Promise<Object> {
-        logger.info('Starting scraping.');
-        return new Promise((resolve, reject) => {
-            const buildSummaryObservable = this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus);
-
-            const scrapeStatus = new ScrapeStatus();
-            scrapeStatus.lastScrapeTime = Date.now();
-            buildSummaryObservable.subscribe(build => {
+    public export(pagingOptions: PagingOptions): Promise<void> {
+        const scrapeStatus = new ScrapeStatus();
+        return this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus).pipe(
+            tap(build => {
                 scrapeStatus.updateFromBuild(build);
-
-                const artifactsSummaryObservable = this.client.getBuildArtifacts(build.build_num || 0);
-
-                artifactsSummaryObservable.subscribe(artifact => {
-                    logger.info(artifact);
-                    logger.info('buildArtifact: NEXT');
-                }, err => {
-                    logger.error('buildArtifact: ERROR: ' + err);
-                    reject(err);
-                }, () => {
-                    logger.info('buildArtifact: COMPLETE');
-                    resolve();
-                });
-
                 this.collectMetrics(build);
-            }, err => {
-                logger.error(`Error scraping : ${err}`);
-                reject(err);
-            }, () => {
+            }),
+            map(build => {
+                return this.client.getBuildArtifacts(build.build_num || 0)
+                    .pipe(map(artifact => {
+                        return { build, artifact };
+                    }));
+            }),
+            mergeAll(),
+            tap(result => {
+                const { build, artifact } = result;
+                this.collectArtifactMetrics(build, artifact);
+            }),
+        )
+            .toPromise()
+            .then(() => {
                 this.previousScrapeStatus.mergeWith(scrapeStatus);
                 logger.info('Finished scraping.');
-                resolve();
+            })
+            .catch(err => {
+                logger.error(`Error scraping : ${err}`);
+                throw err;
             });
-        });
     }
 
     private collectMetrics(build: BuildInfo): void {
@@ -79,7 +75,7 @@ export class CircleCiExporter {
             owner: finishedBuild.username,
             repo: finishedBuild.reponame,
             success: (isSuccess(finishedBuild)).toString(),
-            branch: finishedBuild.branch,
+            branch: finishedBuild.branch || finishedBuild.vcs_tag || '',
         };
 
         const workflow: Workflow | null = getWorkflow(build.workflows);
@@ -98,5 +94,20 @@ export class CircleCiExporter {
         }
 
         return labels as Metrics.Labels;
+    }
+
+    private collectArtifactMetrics(build: BuildInfo, artifact: ArtifactInfo): void {
+        logger.debug(`Collecting metrics for artifact ${build.build_url} ${artifact.path}`);
+        if (artifact.coverage) {
+            const labels: Metrics.ArtifactLabels = {
+                owner: build.username,
+                repo: build.reponame,
+                branch: build.branch || build.vcs_tag || '',
+            };
+
+            Metrics.codeCoverageLines.set(labels, artifact.coverage.covered_lines / artifact.coverage.lines);
+            Metrics.codeCoverageMethods.set(labels, artifact.coverage.covered_methods / artifact.coverage.methods);
+            Metrics.codeCoverageClasses.set(labels, artifact.coverage.covered_classes / artifact.coverage.classes);
+        }
     }
 }

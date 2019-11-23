@@ -1,6 +1,5 @@
-import * as fs from 'fs';
+import { Stream } from 'stream';
 import XmlStream from 'xml-stream';
-import {Readable} from "stream";
 
 export interface CoverageInfo {
     classes: number; // clover: classes, jacoco: CLASS/missed+CLASS/covered
@@ -12,7 +11,7 @@ export interface CoverageInfo {
 }
 
 export interface CodeCoverageParser {
-    parseStream(stream: fs.ReadStream): Promise<CoverageInfo>;
+    parseStream(stream: Stream): Promise<CoverageInfo>;
 }
 
 export class CloverCodeCoverageParser implements CodeCoverageParser {
@@ -29,7 +28,7 @@ export class CloverCodeCoverageParser implements CodeCoverageParser {
     elements="4580" coveredelements="277" -> statement + conditional
     />
 */
-    parseStream(stream: Readable): Promise<CoverageInfo> {
+    parseStream(stream: Stream): Promise<CoverageInfo> {
         let firstError: any;
         const coverageInfo: CoverageInfo = {
             classes: 0,
@@ -91,7 +90,7 @@ https://www.jacoco.org/jacoco/trunk/doc/counters.html
   <counter type="METHOD" missed="252" covered="132"/>
   <counter type="CLASS" missed="49" covered="30"/>
 */
-    parseStream(stream: fs.ReadStream): Promise<CoverageInfo> {
+    parseStream(stream: Stream): Promise<CoverageInfo> {
         let firstError: any;
         const coverageInfo: CoverageInfo = {
             classes: 0,

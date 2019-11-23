@@ -1,8 +1,10 @@
 import { Artifact, BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
-import request from 'request';
-import { Observable, Subscriber } from 'rxjs';
+import { basename } from 'path';
+import request, { Response } from 'request';
+import { from, Observable, Subscriber } from 'rxjs';
+import { map, mergeAll } from 'rxjs/operators';
 import { filterBuilds } from './builds-filter';
-import { CloverCodeCoverageParser, CoverageInfo } from './code-coverage';
+import { CloverCodeCoverageParser, CodeCoverageParser, CoverageInfo, JacocoCodeCoverageParser } from './code-coverage';
 import { CircleCiConfig } from './config';
 import { CurrentScrapeStatus } from './current-scrape-status';
 import logger from './logger';
@@ -13,12 +15,15 @@ export type BuildInfo = BuildSummary & {
     username: string;
     reponame: string;
     lifecycle: string;
+    vcs_tag?: string;
 };
 
 export type ArtifactInfo = Artifact & {
-    username: string;
-    reponame: string;
-    lifecycle: string;
+    coverage?: CoverageInfo;
+    // TODO: C'était là pour une raison où juste cut & paste ?
+    // username: string;
+    // reponame: string;
+    // lifecycle: string;
 };
 
 export type DefinedRequestOptions = Required<RequestOptions>;
@@ -101,50 +106,66 @@ export class CircleCiClient {
     ): void {
         this.api.artifacts(buildNumber)
             .then((artifacts: Artifact[]) => {
-                try {
-                    if (artifacts.length > 0) {
-                        logger.info(`Found ${artifacts.length} artifacts for build #${buildNumber}`);
-                        artifacts.forEach(artifact => {
-                            this.handleArtifact(artifact);
-                        });
-                    }
-                } catch (err) {
-                    subscriber.error(err);
-                }
+                from(artifacts)
+                    .pipe(
+                        map(artifact => this.fetchArtifactInfo(artifact)),
+                        mergeAll(),
+                    )
+                    .subscribe(subscriber);
             })
             .catch(err => {
+                // TODO: if 404 complete else error ?
                 logger.error(`Error fetching artifacts on build #${buildNumber} : ${err}. Retrying.`);
-                // if (files.retry < MAX_RETRIES) {
-                //     files.retry++;
-                //     setTimeout(() => this.doGetBuildArtifacts(subscriber, buildNumber),
-                //         1000 * files.retry);
-                // }
+                subscriber.complete();
             });
     }
 
-    private handleArtifact(artifact: Artifact): void {
+    private async fetchArtifactInfo(artifact: Artifact): Promise<ArtifactInfo> {
+        const parser = this.getCodeCoverageParser(artifact);
+        let coverage;
+        if (parser !== null) {
+            coverage = await this.fetchArtifactCoverageInfo(artifact, parser);
+        }
+        return {
+            ...artifact,
+            coverage,
+        };
+    }
 
-        // TODO: Find good coverage parser based on artifact info
-        const codeCoverageParser = new CloverCodeCoverageParser();
+    private getCodeCoverageParser(artifact: Artifact): CodeCoverageParser | null {
+        const fileName = basename(artifact.pretty_path || '');
+        switch (fileName) {
+            case 'js-test-coverage.xml':
+            case 'php-test-coverage.xml':
+                return new CloverCodeCoverageParser();
+            case 'unit-test-coverage.xml':
+                return new JacocoCodeCoverageParser();
+        }
 
+        return null;
+    }
+
+    private fetchArtifactCoverageInfo(artifact: Artifact, parser: CodeCoverageParser): Promise<CoverageInfo> {
         const options = {
+            method: 'GET',
+            uri: artifact.url,
             headers: {
                 'circle-token': this.apiToken,
             },
+            resolveWithFullResponse: true,
         };
 
-        request.get(artifact.url, options)
-            .on('response', async (response: any) =>  {
-                if (response.statusCode === 200) {
-                    logger.info(`Artifact ${response.request.path} has been retrieved`);
-
-                    const coverageInfo: CoverageInfo = await codeCoverageParser
-                        .parseStream(response.request);
-
-                    // TODO: Add CoverageInfo to ArtifactInfo structure
-                    logger.info('Parsed coverage info', coverageInfo);
-                }
-            });
+        return new Promise((resolve, reject) => {
+            request.get(artifact.url, options)
+                .on('response', async (response: Response) =>  {
+                    if (response.statusCode === 200) {
+                        logger.info(`Artifact ${response.request.path} has been retrieved`);
+                        const coverageInfo: CoverageInfo = await parser.parseStream(response.request);
+                        resolve(coverageInfo);
+                    }
+                })
+                .on('error', reject);
+        });
     }
 
     private handleJobs(
