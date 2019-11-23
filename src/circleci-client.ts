@@ -1,10 +1,13 @@
 import { Artifact, BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
-import { basename } from 'path';
 import request, { Response } from 'request';
 import { from, Observable, Subscriber } from 'rxjs';
 import { map, mergeAll } from 'rxjs/operators';
 import { filterBuilds } from './builds-filter';
-import { CloverCodeCoverageParser, CodeCoverageParser, CoverageInfo, JacocoCodeCoverageParser } from './code-coverage';
+import {
+    CodeCoverageParser,
+    CoverageInfo,
+    getCodeCoverageParserForArtifactPath,
+} from './code-coverage';
 import { CircleCiConfig } from './config';
 import { CurrentScrapeStatus } from './current-scrape-status';
 import logger from './logger';
@@ -20,10 +23,6 @@ export type BuildInfo = BuildSummary & {
 
 export type ArtifactInfo = Artifact & {
     coverage?: CoverageInfo;
-    // TODO: C'était là pour une raison où juste cut & paste ?
-    // username: string;
-    // reponame: string;
-    // lifecycle: string;
 };
 
 export type DefinedRequestOptions = Required<RequestOptions>;
@@ -127,12 +126,12 @@ export class CircleCiClient {
                     return;
                 }
                 logger.error(`Error fetching artifacts on build #${buildNumber} : ${err}. Retrying.`);
-                subscriber.complete();
+                subscriber.error(err);
             });
     }
 
     private async fetchArtifactInfo(artifact: Artifact): Promise<ArtifactInfo> {
-        const parser = this.getCodeCoverageParser(artifact);
+        const parser = getCodeCoverageParserForArtifactPath(artifact.pretty_path || '');
         let coverage;
         if (parser !== null) {
             coverage = await this.fetchArtifactCoverageInfo(artifact, parser);
@@ -143,20 +142,7 @@ export class CircleCiClient {
         };
     }
 
-    private getCodeCoverageParser(artifact: Artifact): CodeCoverageParser | null {
-        const fileName = basename(artifact.pretty_path || '');
-        switch (fileName) {
-            case 'js-test-coverage.xml':
-            case 'php-test-coverage.xml':
-                return new CloverCodeCoverageParser();
-            case 'unit-test-coverage.xml':
-                return new JacocoCodeCoverageParser();
-        }
-
-        return null;
-    }
-
-    private fetchArtifactCoverageInfo(artifact: Artifact, parser: CodeCoverageParser): Promise<CoverageInfo> {
+    private async fetchArtifactCoverageInfo(artifact: Artifact, parser: CodeCoverageParser): Promise<CoverageInfo> {
         const options = {
             method: 'GET',
             uri: artifact.url,
@@ -170,7 +156,6 @@ export class CircleCiClient {
             request.get(artifact.url, options)
                 .on('response', async (response: Response) =>  {
                     if (response.statusCode === 200) {
-                        logger.info(`Artifact ${response.request.path} has been retrieved`);
                         const coverageInfo: CoverageInfo = await parser.parseStream(response.request);
                         resolve(coverageInfo);
                     }

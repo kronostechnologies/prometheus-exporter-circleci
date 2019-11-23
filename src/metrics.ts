@@ -1,4 +1,4 @@
-import {Gauge, Histogram} from 'prom-client';
+import { Gauge, Histogram } from 'prom-client';
 
 // tslint:disable-next-line:interface-over-type-literal
 export type Labels = {
@@ -16,6 +16,7 @@ export type ArtifactLabels = {
     owner: string;
     repo: string;
     branch: string;
+    artifact_name: string;
 };
 
 const buildTimes: Histogram = new Histogram({
@@ -28,19 +29,19 @@ const buildTimes: Histogram = new Histogram({
 const codeCoverageLines: Gauge = new Gauge({
     name: 'circleci_code_coverage_lines',
     help: 'Line based code coverage in %',
-    labelNames: ['owner', 'repo', 'branch'],
+    labelNames: ['owner', 'repo', 'branch', 'artifact_name'],
 });
 
 const codeCoverageMethods: Gauge = new Gauge({
     name: 'circleci_code_coverage_methods',
     help: 'Method based code coverage in %',
-    labelNames: ['owner', 'repo', 'branch'],
+    labelNames: ['owner', 'repo', 'branch', 'artifact_name'],
 });
 
 const codeCoverageClasses: Gauge = new Gauge({
     name: 'circleci_code_coverage_classes',
     help: 'Class based code coverage in %',
-    labelNames: ['owner', 'repo', 'branch'],
+    labelNames: ['owner', 'repo', 'branch', 'artifact_name'],
 });
 
 export {

@@ -1,3 +1,4 @@
+import { basename } from 'path';
 import { Stream } from 'stream';
 import XmlStream from 'xml-stream';
 
@@ -28,7 +29,7 @@ export class CloverCodeCoverageParser implements CodeCoverageParser {
     elements="4580" coveredelements="277" -> statement + conditional
     />
 */
-    parseStream(stream: Stream): Promise<CoverageInfo> {
+    async parseStream(stream: Stream): Promise<CoverageInfo> {
         let firstError: any;
         const coverageInfo: CoverageInfo = {
             classes: 0,
@@ -90,7 +91,7 @@ https://www.jacoco.org/jacoco/trunk/doc/counters.html
   <counter type="METHOD" missed="252" covered="132"/>
   <counter type="CLASS" missed="49" covered="30"/>
 */
-    parseStream(stream: Stream): Promise<CoverageInfo> {
+    async parseStream(stream: Stream): Promise<CoverageInfo> {
         let firstError: any;
         const coverageInfo: CoverageInfo = {
             classes: 0,
@@ -140,4 +141,17 @@ https://www.jacoco.org/jacoco/trunk/doc/counters.html
                 break;
         }
     }
+}
+
+export function getCodeCoverageParserForArtifactPath(artifactPath: string): CodeCoverageParser | null {
+    const fileName = basename(artifactPath);
+    switch (fileName) {
+        case 'js-test-coverage.xml':
+        case 'php-test-coverage.xml':
+            return new CloverCodeCoverageParser();
+        case 'unit-test-coverage.xml':
+            return new JacocoCodeCoverageParser();
+    }
+
+    return null;
 }

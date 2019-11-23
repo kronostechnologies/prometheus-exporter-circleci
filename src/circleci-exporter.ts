@@ -28,8 +28,10 @@ export class CircleCiExporter {
         this.previousScrapeStatus = previousScrapeStatus;
     }
 
-    public export(pagingOptions: PagingOptions): Promise<void> {
+    public async export(pagingOptions: PagingOptions): Promise<void> {
+        logger.info('Starting scraping.');
         const scrapeStatus = new ScrapeStatus();
+        scrapeStatus.lastScrapeTime = Date.now();
         return this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus).pipe(
             tap(build => {
                 scrapeStatus.updateFromBuild(build);
@@ -102,12 +104,16 @@ export class CircleCiExporter {
             const labels: Metrics.ArtifactLabels = {
                 owner: build.username,
                 repo: build.reponame,
-                branch: build.branch || build.vcs_tag || '',
+                branch: build.branch || build.vcs_tag || 'unknown',
+                artifact_name: artifact.pretty_path || 'unnamed',
             };
 
-            Metrics.codeCoverageLines.set(labels, artifact.coverage.covered_lines / artifact.coverage.lines);
-            Metrics.codeCoverageMethods.set(labels, artifact.coverage.covered_methods / artifact.coverage.methods);
-            Metrics.codeCoverageClasses.set(labels, artifact.coverage.covered_classes / artifact.coverage.classes);
+            Metrics.codeCoverageLines.set(labels,
+                artifact.coverage.covered_lines / artifact.coverage.lines * 100);
+            Metrics.codeCoverageMethods.set(labels,
+                artifact.coverage.covered_methods / artifact.coverage.methods * 100);
+            Metrics.codeCoverageClasses.set(labels,
+                artifact.coverage.covered_classes / artifact.coverage.classes * 100);
         }
     }
 }
