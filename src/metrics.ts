@@ -21,6 +21,14 @@ export type ArtifactLabels = {
     artifact_name: string;
 };
 
+// An interface would not be compatible with labelValues
+// tslint:disable-next-line
+export type TestMetadataLabels = {
+    owner: string;
+    repo: string;
+    branch: string;
+};
+
 const buildTimes: Histogram = new Histogram({
     name: 'circleci_build_time',
     help: 'Build time in seconds',
@@ -46,9 +54,30 @@ const codeCoverageClasses: Gauge = new Gauge({
     labelNames: ['owner', 'repo', 'branch', 'artifact_name'],
 });
 
+const testMetadataSuccess: Gauge = new Gauge({
+    name: 'circleci_test_metadata_success',
+    help: 'Number of successfull tests',
+    labelNames: ['owner', 'repo', 'branch'],
+});
+
+const testMetadataFailure: Gauge = new Gauge({
+    name: 'circleci_test_metadata_failure',
+    help: 'Number of failed tests',
+    labelNames: ['owner', 'repo', 'branch'],
+});
+
+const testMetadataRunTime: Gauge = new Gauge({
+    name: 'circleci_test_metadata_run_time',
+    help: 'Total run time for tests execution',
+    labelNames: ['owner', 'repo', 'branch'],
+});
+
 export {
     buildTimes,
     codeCoverageLines,
     codeCoverageMethods,
     codeCoverageClasses,
+    testMetadataSuccess,
+    testMetadataFailure,
+    testMetadataRunTime,
 };

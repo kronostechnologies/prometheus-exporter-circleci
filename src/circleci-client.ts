@@ -1,4 +1,4 @@
-import { Artifact, BuildSummary, CircleCI, RequestOptions } from 'circleci-api';
+import { Artifact, BuildSummary, CircleCI, RequestOptions, TestMetadataResponse } from 'circleci-api';
 import request, { Response } from 'request';
 import { from, Observable, Subscriber } from 'rxjs';
 import { map, mergeAll } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { CurrentScrapeStatus } from './current-scrape-status';
 import logger from './logger';
 import { PagingOptions } from './paging-options';
 import { ScrapeStatus } from './scrape-status';
+import { TestMetadataAggregator, TestMetadataInfo } from './test-metadata';
 
 export type BuildInfo = BuildSummary & {
     username: string;
@@ -160,6 +161,35 @@ export class CircleCiClient {
                 })
                 .on('error', reject);
         });
+    }
+
+    public getTestMetadata(
+        buildNumber: number,
+        repo: string,
+    ): Observable<TestMetadataInfo> {
+        return new Observable(subscriber => {
+            this.doGetTestMetadata(subscriber, buildNumber, repo);
+        });
+    }
+
+    private doGetTestMetadata(
+        subscriber: Subscriber<TestMetadataInfo>,
+        buildNumber: number,
+        repo: string,
+    ): void {
+        this.api.getTestMetadata(buildNumber, {
+            vcs: { repo },
+        })
+            .then((testMetadataResponse: TestMetadataResponse) => {
+                const aggregator = new TestMetadataAggregator();
+                aggregator.loadTestMetadataResponse(testMetadataResponse);
+                subscriber.next(aggregator.metadataInfo);
+                subscriber.complete();
+            })
+            .catch(err => {
+                logger.error(`Error fetching test metadata on build #${buildNumber} : ${err}.`);
+                subscriber.complete();
+            });
     }
 
     private handleJobs(
