@@ -125,8 +125,8 @@ export class CircleCiClient {
                     subscriber.complete();
                     return;
                 }
-                logger.error(`Error fetching artifacts on build #${buildNumber} : ${err}. Retrying.`);
-                subscriber.error(err);
+                logger.error(`Error fetching artifacts on build #${buildNumber} : ${err}.`);
+                subscriber.complete();
             });
     }
 
