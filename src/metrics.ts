@@ -1,6 +1,7 @@
 import { Gauge, Histogram } from 'prom-client';
 
-// tslint:disable-next-line:interface-over-type-literal
+// An interface would not be compatible with labelValues
+// tslint:disable-next-line
 export type Labels = {
     owner: string;
     repo: string;
@@ -11,7 +12,8 @@ export type Labels = {
     upstream_jobs: string;
 };
 
-// tslint:disable-next-line:interface-over-type-literal
+// An interface would not be compatible with labelValues
+// tslint:disable-next-line
 export type ArtifactLabels = {
     owner: string;
     repo: string;
