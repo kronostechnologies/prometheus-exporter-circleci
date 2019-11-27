@@ -107,9 +107,7 @@ export class CircleCiClient {
         repo: string,
     ): void {
         this.api.artifacts(buildNumber, {
-            vcs: {
-                repo: repo,
-            },
+            vcs: { repo },
         })
             .then((artifacts: Artifact[]) => {
                 from(artifacts)

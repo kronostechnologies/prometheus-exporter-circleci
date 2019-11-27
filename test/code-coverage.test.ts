@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { CloverCodeCoverageParser, JacocoCodeCoverageParser } from '../src/code-coverage';
+import { CloverCodeCoverageParser, JacocoCodeCoverageParser } from '../src/code-coverage/code-coverage';
 
-test('CloverCodeCoverageParser parseStream returns CoverageInfo with parsed data', async () => {
+test('CloverParser parseStream returns CoverageInfo with parsed data', async () => {
 
     const parser = new CloverCodeCoverageParser();
     const stream = fs.createReadStream(path.join(__dirname, '../examples/php-test-coverage.xml'));
@@ -18,7 +18,7 @@ test('CloverCodeCoverageParser parseStream returns CoverageInfo with parsed data
     });
 });
 
-test('JacocoCodeCoverageParser parseStream returns CoverageInfo with parsed data', async () => {
+test('JacocoParser parseStream returns CoverageInfo with parsed data', async () => {
 
     const parser = new JacocoCodeCoverageParser();
     const stream = fs.createReadStream(path.join(__dirname, '../examples/unit-test-coverage.xml'));
