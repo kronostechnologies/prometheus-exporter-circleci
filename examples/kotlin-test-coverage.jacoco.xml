@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE report PUBLIC "-//JACOCO//DTD Report 1.1//EN" "report.dtd">
+<report name="account-service">
+  <sessioninfo id="74e6ac689141-65cf072e" start="1572383478851" dump="1572383482613"/>
+  <package name="com/equisoft/accountservice/domain/service">
+    <class name="com/equisoft/accountservice/domain/service/ServiceAccess" sourcefilename="ServiceAccess.kt"/>
+    <class name="com/equisoft/accountservice/domain/service/CPanelAccess" sourcefilename="ServiceAccess.kt">
+      <method name="&lt;init&gt;" desc="()V" line="20">
+        <counter type="INSTRUCTION" missed="0" covered="4"/>
+        <counter type="LINE" missed="0" covered="1"/>
+        <counter type="COMPLEXITY" missed="0" covered="1"/>
+        <counter type="METHOD" missed="0" covered="1"/>
+      </method>
+      <counter type="INSTRUCTION" missed="0" covered="4"/>
+      <counter type="LINE" missed="0" covered="1"/>
+      <counter type="COMPLEXITY" missed="0" covered="1"/>
+      <counter type="METHOD" missed="0" covered="1"/>
+      <counter type="CLASS" missed="0" covered="1"/>
+    </class>
+  </package>
+  <counter type="INSTRUCTION" missed="2778" covered="1771"/>
+  <counter type="BRANCH" missed="130" covered="118"/>
+  <counter type="LINE" missed="415" covered="269"/>
+  <counter type="COMPLEXITY" missed="328" covered="186"/>
+  <counter type="METHOD" missed="252" covered="132"/>
+  <counter type="CLASS" missed="49" covered="30"/>
+</report>

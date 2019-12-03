@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1573486590">
+  <project timestamp="1573486590">
+    <package name="Kronos\FNA\API\DataTranslator">
+      <file name="/srv/kronos/fna/application/Kronos/FNA/API/DataTranslator/Base.php">
+        <class name="Kronos\FNA\API\DataTranslator\Base" namespace="Kronos\FNA\API\DataTranslator">
+          <metrics complexity="5" methods="3" coveredmethods="1" conditionals="0" coveredconditionals="1" statements="5" coveredstatements="1" elements="8" coveredelements="1"/>
+        </class>
+        <line num="18" type="method" name="formatDate" visibility="protected" complexity="2" crap="6.00" count="0"/>
+        <line num="20" type="stmt" count="0"/>
+        <line num="21" type="stmt" count="0"/>
+        <line num="24" type="stmt" count="0"/>
+        <line num="27" type="method" name="formatDateTime" visibility="protected" complexity="1" crap="2.00" count="0"/>
+        <line num="29" type="stmt" count="0"/>
+        <line num="32" type="method" name="getOption" visibility="protected" complexity="2" crap="6.00" count="0"/>
+        <line num="34" type="stmt" count="0"/>
+        <metrics loc="35" ncloc="32" classes="1" methods="3" coveredmethods="0" conditionals="0" coveredconditionals="0" statements="5" coveredstatements="0" elements="8" coveredelements="0"/>
+      </file>
+    </package>
+    <metrics files="51" loc="9619" ncloc="8111" classes="36" methods="530" coveredmethods="34" conditionals="0" coveredconditionals="0" statements="4050" coveredstatements="243" elements="4580" coveredelements="277"/>
+  </project>
+</coverage>
