@@ -1,4 +1,4 @@
-import { basename } from 'path';
+import { basename, extname } from 'path';
 import { Stream } from 'stream';
 import { CloverParser } from './clover-parser';
 import { JacocoParser } from './jacoco-parser';
@@ -17,12 +17,12 @@ export interface CodeCoverageParser {
 }
 
 export function getCodeCoverageParserForArtifactPath(artifactPath: string): CodeCoverageParser | null {
-    const fileName = basename(artifactPath);
-    switch (fileName) {
-        case 'js-test-coverage.xml':
-        case 'php-test-coverage.xml':
+    const fileName = basename(artifactPath).replace(/\.xml$/, '');
+    const extName = extname(fileName);
+    switch (extName) {
+        case '.clover':
             return new CloverParser();
-        case 'unit-test-coverage.xml':
+        case '.jacoco':
             return new JacocoParser();
     }
 
