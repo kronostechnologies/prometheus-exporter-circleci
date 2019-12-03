@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1573486651517" clover="3.2.0">
+  <project timestamp="1573486651517" name="All files">
+    <metrics statements="8236" coveredstatements="3990" conditionals="2839" coveredconditionals="477" methods="2082" coveredmethods="850" elements="13157" coveredelements="5317" complexity="0" loc="8236" ncloc="8236" packages="39" files="205" classes="205"/>
+    <package name="project">
+      <metrics statements="25" coveredstatements="25" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
+      <file name=".test-setup.js" path="/root/project/.test-setup.js">
+        <metrics statements="25" coveredstatements="25" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="5" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="21" count="13" type="stmt"/>
+        <line num="22" count="7" type="stmt"/>
+        <line num="27" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="33" count="183" type="cond" truecount="2" falsecount="0"/>
+        <line num="34" count="166" type="stmt"/>
+        <line num="35" count="166" type="stmt"/>
+        <line num="39" count="1" type="stmt"/>
+        <line num="44" count="1" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

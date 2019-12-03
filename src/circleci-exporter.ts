@@ -1,6 +1,7 @@
 import { Workflow } from 'circleci-api';
+import { map, mergeAll, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { BuildInfo, CircleCiClient } from './circleci-client';
+import { ArtifactInfo, BuildInfo, CircleCiClient } from './circleci-client';
 import logger from './logger';
 import * as Metrics from './metrics';
 import { PagingOptions } from './paging-options';
@@ -29,23 +30,34 @@ export class CircleCiExporter {
 
     public async export(pagingOptions: PagingOptions): Promise<void> {
         logger.info('Starting scraping.');
-        return new Promise((resolve, reject) => {
-            const buildSummaryObservable = this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus);
-
-            const scrapeStatus = new ScrapeStatus();
-            scrapeStatus.lastScrapeTime = Date.now();
-            buildSummaryObservable.subscribe(build => {
+        const scrapeStatus = new ScrapeStatus();
+        scrapeStatus.lastScrapeTime = Date.now();
+        return this.client.getRecentBuilds(pagingOptions, this.previousScrapeStatus).pipe(
+            tap(build => {
                 scrapeStatus.updateFromBuild(build);
                 this.collectMetrics(build);
-            }, err => {
-                logger.error(`Error scraping : ${err}`);
-                reject(err);
-            }, () => {
+            }),
+            map(build => {
+                return this.client.getBuildArtifacts(build.build_num || 0, build.reponame)
+                    .pipe(map(artifact => {
+                        return { build, artifact };
+                    }));
+            }),
+            mergeAll(),
+            tap(result => {
+                const { build, artifact } = result;
+                this.collectArtifactMetrics(build, artifact);
+            }),
+        )
+            .toPromise()
+            .then(() => {
                 this.previousScrapeStatus.mergeWith(scrapeStatus);
                 logger.info('Finished scraping.');
-                resolve();
+            })
+            .catch(err => {
+                logger.error(`Error scraping : ${err}`);
+                throw err;
             });
-        });
     }
 
     private collectMetrics(build: BuildInfo): void {
@@ -65,7 +77,7 @@ export class CircleCiExporter {
             owner: finishedBuild.username,
             repo: finishedBuild.reponame,
             success: (isSuccess(finishedBuild)).toString(),
-            branch: finishedBuild.branch,
+            branch: finishedBuild.branch || finishedBuild.vcs_tag || '',
         };
 
         const workflow: Workflow | null = getWorkflow(build.workflows);
@@ -84,5 +96,24 @@ export class CircleCiExporter {
         }
 
         return labels as Metrics.Labels;
+    }
+
+    private collectArtifactMetrics(build: BuildInfo, artifact: ArtifactInfo): void {
+        logger.debug(`Collecting metrics for artifact ${build.build_url} ${artifact.path}`);
+        if (artifact.coverage) {
+            const labels: Metrics.ArtifactLabels = {
+                owner: build.username,
+                repo: build.reponame,
+                branch: build.branch || build.vcs_tag || 'unknown',
+                artifact_name: artifact.pretty_path || 'unnamed',
+            };
+
+            Metrics.codeCoverageLines.set(labels,
+                artifact.coverage.covered_lines / artifact.coverage.lines * 100);
+            Metrics.codeCoverageMethods.set(labels,
+                artifact.coverage.covered_methods / artifact.coverage.methods * 100);
+            Metrics.codeCoverageClasses.set(labels,
+                artifact.coverage.covered_classes / artifact.coverage.classes * 100);
+        }
     }
 }
