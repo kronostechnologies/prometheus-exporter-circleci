@@ -1,4 +1,5 @@
 import { Workflow } from 'circleci-api';
+import { merge } from 'rxjs';
 import { map, mergeAll, tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { ArtifactInfo, BuildInfo, CircleCiClient } from './circleci-client';
@@ -6,6 +7,7 @@ import logger from './logger';
 import * as Metrics from './metrics';
 import { PagingOptions } from './paging-options';
 import { ScrapeStatus } from './scrape-status';
+import { TestMetadataInfo } from './test-metadata';
 import { getWorkflow, isFinished, isSuccess } from './utils';
 
 type FinishedBuildInfo = BuildInfo & {
@@ -37,18 +39,20 @@ export class CircleCiExporter {
                 scrapeStatus.updateFromBuild(build);
                 this.collectMetrics(build);
             }),
-            map(build => {
-                return this.client.getBuildArtifacts(build.build_num || 0, build.reponame)
-                    .pipe(map(artifact => {
-                        return { build, artifact };
-                    }));
-            }),
+            map(build => merge(
+                this.client.getBuildArtifacts(build.build_num || 0, build.reponame).pipe(
+                    tap(artifact => {
+                        this.collectArtifactMetrics(build, artifact);
+                    }),
+                ),
+                this.client.getTestMetadata(build.build_num || 0, build.reponame).pipe(
+                    tap(testMetadataInfo => {
+                        this.collectTestMetadataMetrics(build, testMetadataInfo);
+                    }),
+                ),
+            )),
             mergeAll(),
-            tap(result => {
-                const { build, artifact } = result;
-                this.collectArtifactMetrics(build, artifact);
-            }),
-        )
+            )
             .toPromise()
             .then(() => {
                 this.previousScrapeStatus.mergeWith(scrapeStatus);
@@ -115,5 +119,19 @@ export class CircleCiExporter {
             Metrics.codeCoverageClasses.set(labels,
                 artifact.coverage.covered_classes / artifact.coverage.classes * 100);
         }
+    }
+
+    private collectTestMetadataMetrics(build: BuildInfo, metadataInfo: TestMetadataInfo): void {
+        logger.debug(`Collecting metrics for test metadata ${build.build_url}`);
+
+        const labels: Metrics.TestMetadataLabels = {
+            owner: build.username,
+            repo: build.reponame,
+            branch: build.branch || build.vcs_tag || 'unknown',
+        };
+
+        Metrics.testMetadataSuccess.set(labels, metadataInfo.success);
+        Metrics.testMetadataFailure.set(labels, metadataInfo.failure);
+        Metrics.testMetadataRunTime.set(labels, metadataInfo.run_time);
     }
 }
