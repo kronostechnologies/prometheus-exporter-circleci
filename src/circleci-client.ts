@@ -1,7 +1,7 @@
 import { Artifact, BuildSummary, CircleCI, RequestOptions, TestMetadataResponse } from 'circleci-api';
 import request, { Response } from 'request';
-import { from, Observable, Subscriber } from 'rxjs';
-import { map, mergeAll } from 'rxjs/operators';
+import { EMPTY, from, Observable, Subscriber } from 'rxjs';
+import { catchError, map, mergeAll } from 'rxjs/operators';
 import { filterBuilds } from './builds-filter';
 import {
     CodeCoverageParser,
@@ -115,6 +115,10 @@ export class CircleCiClient {
                     .pipe(
                         map(artifact => this.fetchArtifactInfo(artifact)),
                         mergeAll(),
+                        catchError(err => {
+                            logger.error(`Error fetching artifact info on build #${buildNumber} : ${err}.`);
+                            return EMPTY;
+                        }),
                     )
                     .subscribe(subscriber);
             })
