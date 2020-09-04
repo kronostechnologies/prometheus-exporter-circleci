@@ -14,7 +14,7 @@ executors:
       - image: 'circleci/python'
 
 orbs:
-  docker: circleci/docker@0.5.1
+  aws-ecr: circleci/aws-ecr@6.12.0
 
 commands:
   attach_at_working_directory:
@@ -109,32 +109,6 @@ jobs:
           path: 'dist/'
           destination: '/dist'
 
-  docker_build_and_push:
-    executor: 'docker'
-    parameters:
-      docker_tag:
-        type: string
-        default: ""
-    steps:
-      - attach_at_working_directory
-      - setup_remote_docker
-      - when:
-          condition: <<parameters.docker_tag>>
-          steps:
-            - run: echo "export APP_VERSION=<<parameters.docker_tag>>" >> $BASH_ENV
-      - unless:
-          condition: <<parameters.docker_tag>>
-          steps:
-            - run: echo "export APP_VERSION=$(cut -d 'v' -f 2 \<<<$CIRCLE_TAG)" >> $BASH_ENV
-      - run: 'echo "App version: $APP_VERSION"'
-      - docker/check
-      - docker/build:
-          image: kronostechnologies/prometheus-exporter-circleci
-          tag: ${APP_VERSION}
-      - docker/push:
-          image: kronostechnologies/prometheus-exporter-circleci
-          tag: ${APP_VERSION}
-
 workflows:
   version: 2
 
@@ -144,24 +118,24 @@ workflows:
       - yarn_install:
           requires:
             - prepare_workspace
-
       - lint:
           requires:
             - yarn_install
       - unit_tests:
           requires:
             - yarn_install
-
       - yarn_build:
           requires:
             - lint
             - unit_tests
-
-      - docker_build_and_push:
-          context: orb/docker
-          docker_tag: latest
-          filters:
-            branches:
-              only: master
+      - aws-ecr/build-and-push-image:
+          repo: 'prometheus-exporter-circleci'
+          tag: latest,${CIRCLE_TAG}
+          context: orb/aws-ecr
           requires:
             - yarn_build
+          filters:
+            tags:
+              only: /^v[0-9]+\.[0-9]+\.[0-9]+/
+            branches:
+              only: master
